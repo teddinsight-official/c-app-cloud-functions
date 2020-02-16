@@ -1,0 +1,193 @@
+<body class="container">
+    <div class="d-flex justify-content-center mt-5">
+        <div class="card " style="width: 25rem;">
+            <div class="card-body text-center">
+                <h5 class="card-title">Teddinsight Collaboarative app</h5>
+                <h6 class="card-subtitle mb-2 text-muted">Workspace</h6>
+                <p class="card-text">Create a new workspace to add your team members</p>
+                <a data-toggle="modal" data-target="#loginModal" href="" class="btn btn-primary">Enter Workspace</a>
+                <a data-toggle="modal" data-target="#signUpModal" href="" class="btn btn-success">Create Workspace</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Sign into Workspace</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="login-form" action="/submit" method="POST">
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">Email address</label>
+                            <input required name="email" type="email" class="form-control" id="exampleInputEmail1"
+                                aria-describedby="emailHelp" placeholder="Enter email">
+                            <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                                else.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="exampleInputPassword1">Password</label>
+                            <input required name="password" type="password" class="form-control"
+                                id="exampleInputPassword1" placeholder="Password">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="sign-in" type="button" class="btn btn-primary">Sign In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="signUpModal" tabindex="-1" role="dialog" aria-labelledby="signUpModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Create a Workspace</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-form" action="/submit" method="POST">
+                        <div class="form-group">
+                            <label for="inputEmail1">Email address</label>
+                            <input required name="email" type="email" class="form-control" id="inputEmail1"
+                                aria-describedby="emailHelp" placeholder="Enter email">
+                            <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                                else.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPassword1">Password</label>
+                            <input required name="password" type="password" class="form-control" id="inputPassword1"
+                                placeholder="Password">
+                        </div>
+                        <div class="form-group">
+                            <label for="workspace">Workspace Name</label>
+                            <input required name="workspace" type="text" class="form-control" id="workspace"
+                                placeholder="workspace">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="create" type="button" class="btn btn-primary">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+    H5_loading.show();
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            const uid = user.uid;
+            db.ref(`workspace/${uid}`).once('value').then((snapshot) => {
+                H5_loading.hide();
+                if (snapshot.val()) {
+                    window.location.href = '/create';
+                }
+            }).catch((error) => {
+                H5_loading.hide();
+            });
+        } else H5_loading.hide();
+    });
+    const loginForm = $('#login-form');
+    const createForm = $('#create-form');
+    $('#sign-in').on('click', () => {
+        loginForm.submit();
+    });
+    $('#create').on('click', () => {
+        createForm.submit();
+    });
+    loginForm.on('submit', function (e) {
+        e.preventDefault();
+        const data = $(this).serializeArray();
+        H5_loading.show();
+        auth.signInWithEmailAndPassword(data[0].value, data[1].value).then((res) => {
+            const user = res.user;
+            if (user) {
+                const uid = user.uid;
+                db.ref(`workspace/${uid}`).once('value').then((snapshot) => {
+                    if (snapshot.val()) {
+                        window.location.href = '/create';
+                    } else {
+                        H5_loading.hide();
+                        alert('can\'t access workspace with this account');
+                        auth.signOut();
+                    }
+                }).catch((error) => {
+                    H5_loading.hide();
+                    auth.signOut();
+                    console.error(error);
+                });
+            } else {
+                H5_loading.hide();
+                console.error("Unable to sign in at the moment");
+            }
+        }).catch(function (error) {
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            H5_loading.hide();
+            alert(errorMessage);
+        });
+    });
+    createForm.on('submit', function (e) {
+        e.preventDefault();
+        const data = $(this).serializeArray();
+        const ws = data[2].value;
+        if (!ws || ws === null || ws === undefined) {
+            console.error("workspace name is missing");
+            alert("Provide workspace name");
+            return;
+        }
+        H5_loading.show();
+        auth.createUserWithEmailAndPassword(data[0].value, data[1].value).then((res) => {
+            if (res.user) {
+                const user = res.user;
+                user.updateProfile({
+                    displayName: `${data[2].value}-workspace`
+                }).then(function () {
+                    console.log('name update successfull');
+                    db.ref(`workspace/${user.uid}`).set({
+                        id: user.uid,
+                        name: `${data[2].value}`,
+                        workspaceId: `${data[2].value}-workspace`
+                    }).then(() => {
+                        console.log("database insert success");
+                        window.location.href = '/create';
+                    }).catch((error) => {
+                        H5_loading.hide();
+                        auth.signOut();
+                        alert(`Error creating workspace ${error}`);
+                        console.error(`Error creating workspace ${error}`)
+                    });
+                }).catch(function (error) {
+                    H5_loading.hide();
+                    auth.signOut();
+                    alert(`Error creating workspace ${error}`);
+                    console.error(`Error creating workspace ${error}`)
+                });
+            } else {
+                H5_loading.hide();
+                alert("sign up failed");
+            }
+        }).catch(function (error) {
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // ...
+            H5_loading.hide();
+            alert(errorMessage);
+        });
+    });
+</script>

@@ -1,0 +1,121 @@
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-end mt-3">
+            <button id="sign-out" class="btn btn-danger">Sign Out</button>
+        </div>
+        <div class="d-flex justify-content-center mt-3">
+            <h3 id="workspace"></h3>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <h3>Users in Workspace</h3>
+                <div id="users">
+                    <ol id="user_list">
+
+                    </ol>
+                </div>
+            </div>
+            <div class="col-md-6" style="border-left: 1px solid;">
+                <form class="ml-1" method="post" action="/create">
+                    <input name="newuser" class="d-none">
+                    <input name="workspaceId" class="d-none" id="workspaceId">
+                    <h3>Create a new User</h3>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <input required type="text" name="fname" class="form-control" placeholder="First Name *"
+                                    value="" />
+                            </div>
+                            <div class="form-group">
+                                <input required type="text" name="lname" class="form-control" placeholder="Last Name *"
+                                    value="" />
+                            </div>
+                            <div class="form-group">
+                                <input required type="text" name="username" class="form-control"
+                                    placeholder="Username *" value="" />
+                            </div>
+                            <div class="form-group">
+                                <input required type="email" name="email" class="form-control"
+                                    placeholder="Email Address*" value="" />
+                            </div>
+                            <div class="form-group">
+                                <input required type="password" name="password" class="form-control"
+                                    placeholder="Password *" value="" />
+                            </div>
+                            <div class="form-group">
+                                <label>Role *</label>
+                                <select id="role" name="role" class="form-control" required>
+                                    <option value="Creative Designer">Creative Designer</option>
+                                    <option value="Content Curator">Content Curator</option>
+                                    <option value="Human Resource">Human Resource</option>
+                                    <option value="Social Media Manager">Social Media Manager</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Client">Client</option>
+                                    <option value="Partner">Partner</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input id="business" type="name" name="business" class="form-control d-none"
+                                    placeholder="Business Name*" value="" />
+                            </div>
+                            <div class="form-group">
+                                <input required type="text" value="+234" name="phone" class="form-control"
+                                    placeholder="Phone Number *" value="" />
+                            </div>
+                        </div>
+                        <button id="subButton" type="submit" name="btnSubmit" class="btn btn-success btn-block">Create
+                            User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    H5_loading.show();
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            H5_loading.hide();
+            var displayName = user.displayName;
+            var email = user.email;
+            var emailVerified = user.emailVerified;
+            var photoURL = user.photoURL;
+            var isAnonymous = user.isAnonymous;
+            var uid = user.uid;
+            var providerData = user.providerData;
+            $('#workspaceId').val(uid);
+            $('#workspace').append(`Workspace ID: ${displayName}`);
+            init(uid);
+        }
+    });
+    $('#sign-out').on('click', () => {
+        auth.signOut();
+    })
+    function init(uid) {
+        console.log(uid);
+        const list = $('#user_list');
+        db.ref(`Users/${uid}`).on('value', (snapshot) => {
+            let info = ""
+            list.text(info);
+            snapshot.forEach((childSnapshot) => {
+                const data = childSnapshot.val();
+                //console.table(data)
+                info += `<li>${data.firstName} ${data.lastName} - ${data.role}</li>`
+            });
+            list.append(info);
+        });
+        /*$('#user-form').on('submit', function (e) {
+            console.log("submit");
+            var data = $('#form').serializeArray().reduce(function (obj, item) {
+                obj[item.name] = item.value;
+                return obj;
+            }, {});
+            console.table(data);
+            e.preventDefault()
+        });*/
+    }
+</script>
+{{#if status}}
+<script>alert("{{status}}");</script>
+{{/if}}
