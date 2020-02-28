@@ -59,4 +59,8 @@ app.get('/create', (req, res) => {
     res.render('create', { title: 'Create' })
 });
 
+app.get('/redirects', (req, res) => {
+    res.render('redirect', {layout: false});
+});
+
 module.exports = app;

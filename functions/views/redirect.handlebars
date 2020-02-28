@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Redirects</title>
+</head>
+
+<body>
+    <div class="container d-none" id="auth-complete" style="margin-top:100px">
+        <div class="row">
+            <div class="col-12 text-center">
+                <img height="100px" width="100px" class="img-fluid"
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Yes_Check_Circle.svg/1024px-Yes_Check_Circle.svg.png">
+                <p class="text-center">Authentication Completed, You can now close the page</p>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script>
+    var h = window.location.hash;
+    if (h != "") {
+        h = h.substr(1);
+        var access_token = h.split("=")[1];
+        console.log(access_token);
+        $.ajax({
+            url: "https://api.instagram.com/v1/users/self/?access_token=" + access_token,
+            type: "get",
+            error: (err) => {
+                console.table(err);
+                swal("error", "An error occurred", "error");
+            },
+            success: (result) => {
+                sendAccoutDataToDatabase(result);
+            }
+        });
+    } else {
+        alert("The request is invalid, close page");
+    }
+
+    function sendAccoutDataToDatabase(result) {
+        console.log(result.data.id);
+        let data = {
+            "IGusername": result.data.username,
+            "IGid": result.data.id,
+            "IGfollowers": result.data.counts.followed_by,
+            "IGfollowing": result.data.counts.follows,
+            "accessToken": access_token
+        }
+        var jsonData = JSON.stringify(data);
+        Android.sendData(jsonData);
+        /**$.ajax({
+            type: "post",
+            data: data,
+            url: '/redirects',
+            error: (err) => {
+                swal("error", err, "error");
+            },
+            success: (res) => {
+                console.log(res);
+                if (res == 1) {
+                    $("#auth-complete").removeClass("d-none");
+                    swal("success", "Instagram account added, you can close the page", "success");
+                }
+            }
+        });**/
+    }
+</script>
+
+</html>
