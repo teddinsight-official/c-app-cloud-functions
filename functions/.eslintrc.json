@@ -60,7 +60,7 @@
     "no-extra-label": 1,
 
     // Disallow leading or trailing decimal points in numeric literals
-    "no-floating-decimal": 2,
+    "no-floating-decimal": 1,
 
     // Warn against shorthand type conversions
     "no-implicit-coercion": 1,

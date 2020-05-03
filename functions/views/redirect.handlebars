@@ -44,7 +44,11 @@
             }
         });
     } else {
-        alert("The request is invalid, close page");
+        try {
+            swal("error", "An error occurred", "error");
+        } catch (err) {
+            alert("The request is invalid, close page");
+        }
     }
 
     function sendAccoutDataToDatabase(result) {
